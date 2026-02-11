@@ -1,0 +1,1132 @@
+
+    <!doctype html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Dashboard Baterías LH01</title>
+        
+<style>
+  :root{
+    --bg:#0b1020;
+    --line:rgba(255,255,255,.10);
+    --line2:rgba(255,255,255,.07);
+    --text:#e7ecff;
+    --muted:rgba(231,236,255,.70);
+    --muted2:rgba(231,236,255,.55);
+    --pos:#2ee59d;
+    --neg:#ff5c7a;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+  .wrap{max-width:1250px;margin:0 auto;padding:22px;}
+  .hero{padding:10px 4px 6px 4px;margin-bottom:10px;}
+  .hero-title{font-size:26px;font-weight:850;}
+  .hero-sub{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.45;}
+  .pill{display:inline-block;padding:2px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted);
+    margin-left:8px;background:rgba(255,255,255,.03);}
+
+  .card,.chart-card{
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.28);
+    margin:16px 0;
+  }
+  .card-h{margin-bottom:10px;}
+  .h2{font-size:16px;font-weight:850;}
+  .sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35;}
+
+  .chart-wrap{
+    height:420px;border-radius:14px;border:1px solid var(--line2);
+    background:rgba(0,0,0,.10);padding:10px;
+  }
+
+  /* Buttons for accordion */
+  .acc-controls{display:flex;gap:10px;margin:8px 0 14px 0;}
+  .btn{
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 12px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:12px;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);}
+
+  /* Accordion */
+  details.acc{
+    border:1px solid var(--line2);
+    border-radius:14px;
+    background:rgba(0,0,0,.10);
+    margin:10px 0;
+    overflow:hidden;
+  }
+  details.acc summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 12px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    background:rgba(13,18,40,.65);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  details.acc summary::-webkit-details-marker{display:none;}
+  .acc-title{font-weight:900;}
+  .acc-sub{color:var(--muted2);font-size:12px;}
+  .acc-body{padding:12px;}
+
+  /* TABLES (FIT WIDTH) */
+  .table-wrap.no-scroll{
+    overflow:hidden;
+    border-radius:14px;
+    border:1px solid var(--line2);
+    background:rgba(0,0,0,.10);
+  }
+  table.tbl.fit{
+    width:100%;
+    table-layout:fixed;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:12.5px;
+  }
+  table.tbl.fit thead th{
+      position:sticky; top:0; z-index:2;
+      background:rgba(13,18,40,.98);
+      color:var(--muted);
+      text-align:right;
+      padding:10px 8px;
+      border-bottom:1px solid var(--line);
+
+      /* CLAVE: no truncar */
+      white-space:normal;
+      overflow:visible;
+      text-overflow:clip;
+
+      /* que corte bien nombres */
+      overflow-wrap:anywhere;
+      word-break:break-word;
+      line-height:1.1;
+      font-size:11px;
+    }
+
+  table.tbl.fit thead th:first-child{
+    text-align:left;
+    width:110px;
+  }
+  table.tbl.fit tbody td{
+    padding:9px 10px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    vertical-align:top;
+  }
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  td.label{font-weight:700;white-space:nowrap;width:110px;}
+
+  tr.row-day:nth-child(odd) td{background:rgba(255,255,255,.015);}
+  tr.row-day:hover td{background:rgba(255,255,255,.045);}
+
+  tr.row-week td{
+    background:rgba(99,102,241,.12)!important;
+    border-bottom:1px solid rgba(99,102,241,.25);
+    font-weight:750;
+  }
+  tr.row-impact td{
+    background:rgba(16,185,129,.08)!important;
+    border-bottom:1px solid rgba(16,185,129,.18);
+    font-weight:800;
+  }
+  tr.row-trend td{
+    background:rgba(234,179,8,.08)!important;
+    border-bottom:1px solid rgba(234,179,8,.18);
+    font-weight:800;
+  }
+
+  .chg.pos{color:var(--pos);font-weight:850;}
+  .chg.neg{color:var(--neg);font-weight:850;}
+  .muted{color:var(--muted2);font-weight:650;}
+
+  /* Weekly mini charts grid */
+  .grid-mini{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:12px;
+  }
+  @media (min-width: 1100px){
+    .grid-mini{grid-template-columns: repeat(3, minmax(0, 1fr));}
+  }
+  .mini-card{
+    border:1px solid var(--line2);
+    border-radius:14px;
+    background:rgba(0,0,0,.10);
+    padding:12px;
+  }
+  .mini-title{font-weight:900;}
+  .mini-sub{color:var(--muted2);font-size:12px;margin-top:3px;margin-bottom:10px;}
+  .mini-chart{height:220px;}
+
+  .footer{color:var(--muted2);font-size:12px;margin-top:18px;padding:8px 2px;}
+</style>
+
+      </head>
+      <body>
+        <div class="wrap">
+          
+    <div class="hero">
+      <div class="hero-title">Dashboard – Baterías (Flujo LH01)</div>
+      <div class="hero-sub">
+        Cierre diario = <b>MAX(acumulado)</b> en ventana <b>06:45</b>–<b>07:15</b>.
+        <span class="pill">Período: 2025-12-13 → 2026-02-11</span>
+        <span class="pill">Cierre: 2026-02-11 07:15</span>
+      </div>
+    </div>
+    
+          
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="h2">Acumulados finales (interactivo)</div>
+          <div class="sub">Zoom/pan + hover.</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="accChart"></canvas>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <script>
+      const accLabels = ["2025-12-13", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-20", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-25", "2025-12-26", "2025-12-27", "2025-12-28", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11"];
+      const accData = {
+        labels: accLabels,
+        datasets: [{
+          label: "BAT CG01",
+          data: [857.680359, 911.791, 901.96936, 888.2621, 880.8208, 858.843933, 855.147461, 814.0444, 799.700256, 794.8226, 804.9176, 827.0002, 870.5899, 894.1603, 895.718, 889.76825, 891.3496, 882.644348, 921.334534, 917.028259, 912.777039, 906.905945, 887.321655, 801.312, 858.165833, 884.9882, 885.9946, 782.6651, 787.0336, 815.1439, 801.7384, 765.394836, 792.3016, 772.710754, 749.833069, 762.425354, 758.1642, 702.9975, 801.3797, 783.4725, 786.5756, 775.547058, 768.9434, 779.9072, 829.9176, 798.895264, 800.4151, 831.5033, 823.3666, 807.800049, 808.259033, 779.267334, 788.0756, 807.3648, 791.1824, 787.039],
+          borderColor: "rgb(99, 102, 241)",
+          backgroundColor: "rgb(99, 102, 241)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "BAT CG19",
+          data: [784.83136, 786.4241, 813.221558, 806.050232, 821.6602, 790.381, 784.3537, 792.9603, 790.327148, 790.7152, 785.804932, 793.016968, 824.0915, 775.988159, 730.4015, 764.3395, 791.869568, 772.214966, 786.6189, 832.242249, 815.7448, 788.9408, 776.6327, 778.0924, 744.3578, 794.727539, 795.2071, 806.6668, 797.1007, 791.2607, 799.932068, 799.12, 774.5578, 791.7104, 804.403931, 807.943848, 785.4547, 693.548767, 789.211, 795.6254, 793.6625, 806.8617, 812.3323, 782.9984, 764.380432, 654.8116, 790.5365, 752.1116, 755.7891, 778.611633, 764.9864, 768.415039, 789.8111, 778.340332, 748.666138, 747.423645],
+          borderColor: "rgb(16, 185, 129)",
+          backgroundColor: "rgb(16, 185, 129)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "BAT CG20",
+          data: [67.70095, 75.7488, 72.21827, 76.30743, 76.5027542, 73.18752, 69.14941, 71.96753, 74.432785, 78.63328, 70.1201859, 72.7358856, 74.6760254, 71.7014, 73.18307, 77.36426, 62.3753738, 72.29576, 75.2587051, 75.7130051, 70.35737, 72.65102, 67.10704, 70.00965, 70.51087, 71.4670258, 63.5708122, 66.97389, 66.44541, 66.12358, 62.6577263, 64.55231, 60.33152, 70.0653, 64.56142, 66.85956, 62.71253, 67.8835, 64.07554, 70.96466, 59.03365, 67.043335, 63.6469231, 64.12258, 69.7153549, 64.00312, 68.43041, 62.51776, 61.0671844, 66.72002, 62.507534, 64.02199, 67.27111, 57.1736946, 66.82234, 58.49525],
+          borderColor: "rgb(239, 68, 68)",
+          backgroundColor: "rgb(239, 68, 68)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "BAT LH01",
+          data: [81.51267, 86.06944, 80.9592361, 95.77251, 154.691025, 137.382339, 123.776863, 121.329933, 118.497284, 121.273514, 122.372604, 123.568176, 155.327942, 145.830063, 153.151672, 141.424042, 143.400925, 151.4951, 158.450226, 134.939392, 140.247711, 154.035141, 134.343628, 136.437561, 150.376038, 126.468643, 138.38089, 142.4648, 127.619217, 147.618912, 139.103378, 132.377563, 137.697861, 141.533569, 135.8168, 143.674225, 127.816574, 165.690109, 144.712936, 141.7602, 152.354065, 151.329239, 144.463654, 144.895538, 148.320541, 138.979843, 137.644974, 150.0338, 142.763718, 145.180756, 145.250092, 143.9963, 146.129669, 145.910965, 138.4247, 157.818756],
+          borderColor: "rgb(234, 179, 8)",
+          backgroundColor: "rgb(234, 179, 8)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "BAT LH02",
+          data: [58.95703, 57.4761162, 51.42268, 50.8400421, 51.3574638, 48.4449272, 61.46327, 52.47084, 49.06543, 46.60221, 50.552536, 44.95606, 49.324398, 50.03641, 49.8216362, 44.5849075, 60.4411354, 51.0757027, 51.1682739, 62.5383148, 48.63066, 56.7884254, 59.3246841, 60.1004181, 54.47328, 62.14779, 61.2018433, 62.2266, 70.2886047, 58.54168, 60.95327, 49.412796, 54.08747, 50.3641243, 56.8481, 69.27964, 43.5782356, 64.04612, 59.20211, 65.22596, 57.0546951, 55.7868538, 55.37916, 53.5063553, 49.8162041, 60.76286, 49.4436264, 53.8997879, 55.0666428, 54.98666, 51.4792633, 53.24467, 53.913414, 52.94614, 69.5346451, 48.8129463],
+          borderColor: "rgb(59, 130, 246)",
+          backgroundColor: "rgb(59, 130, 246)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "BAT LH04",
+          data: [501.587555, 505.91037, 508.8581, 505.097351, 487.878967, 479.215332, 501.6223, 505.23703, 498.342682, 494.285522, 492.732544, 500.378082, 498.551819, 484.5422, 487.2163, 487.598877, 469.1666, 466.7298, 490.901, 467.5395, 504.3034, 538.729, 544.797668, 515.234131, 528.8117, null, null, 302.668579, 541.517639, 540.649658, 532.814331, 540.5472, 523.4274, 523.954346, 534.441956, 543.503662, 494.23172, 564.942444, 522.105835, 523.62085, 508.587463, 514.635742, 508.0704, 479.443, 553.3781, 592.7847, 561.167, 562.1253, 538.1805, 538.104, 515.8586, 534.6811, 540.0404, 551.3371, 582.626465, 591.9163],
+          borderColor: "rgb(168, 85, 247)",
+          backgroundColor: "rgb(168, 85, 247)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        }]
+      };
+
+      new Chart(document.getElementById('accChart'), {
+        type: 'line',
+        data: accData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: false },
+          plugins: {
+            legend: { position: 'top', labels: { color: 'rgba(231,236,255,.9)' } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const v = ctx.parsed.y;
+                  if (v === null || v === undefined) return ctx.dataset.label + ': —';
+                  return ctx.dataset.label + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                }
+              }
+            },
+            zoom: {
+              zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
+              pan:  { enabled: true, mode: 'x' }
+            }
+          },
+          scales: {
+            x: { ticks: { color: 'rgba(231,236,255,.75)' }, grid: { color: 'rgba(255,255,255,.06)' } },
+            y: { ticks: { color: 'rgba(231,236,255,.75)' }, grid: { color: 'rgba(255,255,255,.06)' } }
+          }
+        }
+      });
+    </script>
+    
+
+          <div class="card">
+            <div class="card-h">
+              <div class="h2">Planilla (ACUMULADO DIARIO) + Prome Sem (por semana)</div>
+              <div class="sub">Cada columna es una batería del flujo LH01. Acordeón: por defecto se abren las últimas 2 semanas.</div>
+            </div>
+            
+    <div class="acc-controls">
+      <button class="btn" onclick="openAllWeeks()">Expandir todo</button>
+      <button class="btn" onclick="closeAllWeeks()">Colapsar todo</button>
+    </div>
+    
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 50</span>
+            <span class="acc-sub">13/12 → 16/12</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_50">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>13-dic</td><td class='num'>857,7</td><td class='num'>784,8</td><td class='num'>67,7</td><td class='num'>81,5</td><td class='num'>59,0</td><td class='num'>501,6</td></tr>
+<tr class='row-day'><td class='label'>14-dic</td><td class='num'>911,8</td><td class='num'>786,4</td><td class='num'>75,7</td><td class='num'>86,1</td><td class='num'>57,5</td><td class='num'>505,9</td></tr>
+<tr class='row-day'><td class='label'>15-dic</td><td class='num'>902,0</td><td class='num'>813,2</td><td class='num'>72,2</td><td class='num'>81,0</td><td class='num'>51,4</td><td class='num'>508,9</td></tr>
+<tr class='row-day'><td class='label'>16-dic</td><td class='num'>888,3</td><td class='num'>806,1</td><td class='num'>76,3</td><td class='num'>95,8</td><td class='num'>50,8</td><td class='num'>505,1</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 50</b></td><td class='num'><b>889,9</b></td><td class='num'><b>797,6</b></td><td class='num'><b>73,0</b></td><td class='num'><b>86,1</b></td><td class='num'><b>54,7</b></td><td class='num'><b>505,4</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 51</span>
+            <span class="acc-sub">17/12 → 23/12</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_51">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>17-dic</td><td class='num'>880,8</td><td class='num'>821,7</td><td class='num'>76,5</td><td class='num'>154,7</td><td class='num'>51,4</td><td class='num'>487,9</td></tr>
+<tr class='row-day'><td class='label'>18-dic</td><td class='num'>858,8</td><td class='num'>790,4</td><td class='num'>73,2</td><td class='num'>137,4</td><td class='num'>48,4</td><td class='num'>479,2</td></tr>
+<tr class='row-day'><td class='label'>19-dic</td><td class='num'>855,1</td><td class='num'>784,4</td><td class='num'>69,1</td><td class='num'>123,8</td><td class='num'>61,5</td><td class='num'>501,6</td></tr>
+<tr class='row-day'><td class='label'>20-dic</td><td class='num'>814,0</td><td class='num'>793,0</td><td class='num'>72,0</td><td class='num'>121,3</td><td class='num'>52,5</td><td class='num'>505,2</td></tr>
+<tr class='row-day'><td class='label'>21-dic</td><td class='num'>799,7</td><td class='num'>790,3</td><td class='num'>74,4</td><td class='num'>118,5</td><td class='num'>49,1</td><td class='num'>498,3</td></tr>
+<tr class='row-day'><td class='label'>22-dic</td><td class='num'>794,8</td><td class='num'>790,7</td><td class='num'>78,6</td><td class='num'>121,3</td><td class='num'>46,6</td><td class='num'>494,3</td></tr>
+<tr class='row-day'><td class='label'>23-dic</td><td class='num'>804,9</td><td class='num'>785,8</td><td class='num'>70,1</td><td class='num'>122,4</td><td class='num'>50,6</td><td class='num'>492,7</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 51</b></td><td class='num'><b>829,8</b></td><td class='num'><b>793,7</b></td><td class='num'><b>73,4</b></td><td class='num'><b>128,5</b></td><td class='num'><b>51,4</b></td><td class='num'><b>494,2</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 52</span>
+            <span class="acc-sub">24/12 → 30/12</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_52">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>24-dic</td><td class='num'>827,0</td><td class='num'>793,0</td><td class='num'>72,7</td><td class='num'>123,6</td><td class='num'>45,0</td><td class='num'>500,4</td></tr>
+<tr class='row-day'><td class='label'>25-dic</td><td class='num'>870,6</td><td class='num'>824,1</td><td class='num'>74,7</td><td class='num'>155,3</td><td class='num'>49,3</td><td class='num'>498,6</td></tr>
+<tr class='row-day'><td class='label'>26-dic</td><td class='num'>894,2</td><td class='num'>776,0</td><td class='num'>71,7</td><td class='num'>145,8</td><td class='num'>50,0</td><td class='num'>484,5</td></tr>
+<tr class='row-day'><td class='label'>27-dic</td><td class='num'>895,7</td><td class='num'>730,4</td><td class='num'>73,2</td><td class='num'>153,2</td><td class='num'>49,8</td><td class='num'>487,2</td></tr>
+<tr class='row-day'><td class='label'>28-dic</td><td class='num'>889,8</td><td class='num'>764,3</td><td class='num'>77,4</td><td class='num'>141,4</td><td class='num'>44,6</td><td class='num'>487,6</td></tr>
+<tr class='row-day'><td class='label'>29-dic</td><td class='num'>891,3</td><td class='num'>791,9</td><td class='num'>62,4</td><td class='num'>143,4</td><td class='num'>60,4</td><td class='num'>469,2</td></tr>
+<tr class='row-day'><td class='label'>30-dic</td><td class='num'>882,6</td><td class='num'>772,2</td><td class='num'>72,3</td><td class='num'>151,5</td><td class='num'>51,1</td><td class='num'>466,7</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 52</b></td><td class='num'><b>878,7</b></td><td class='num'><b>778,8</b></td><td class='num'><b>72,0</b></td><td class='num'><b>144,9</b></td><td class='num'><b>50,0</b></td><td class='num'><b>484,9</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 1</span>
+            <span class="acc-sub">31/12 → 06/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_1">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>31-dic</td><td class='num'>921,3</td><td class='num'>786,6</td><td class='num'>75,3</td><td class='num'>158,5</td><td class='num'>51,2</td><td class='num'>490,9</td></tr>
+<tr class='row-day'><td class='label'>01-ene</td><td class='num'>917,0</td><td class='num'>832,2</td><td class='num'>75,7</td><td class='num'>134,9</td><td class='num'>62,5</td><td class='num'>467,5</td></tr>
+<tr class='row-day'><td class='label'>02-ene</td><td class='num'>912,8</td><td class='num'>815,7</td><td class='num'>70,4</td><td class='num'>140,2</td><td class='num'>48,6</td><td class='num'>504,3</td></tr>
+<tr class='row-day'><td class='label'>03-ene</td><td class='num'>906,9</td><td class='num'>788,9</td><td class='num'>72,7</td><td class='num'>154,0</td><td class='num'>56,8</td><td class='num'>538,7</td></tr>
+<tr class='row-day'><td class='label'>04-ene</td><td class='num'>887,3</td><td class='num'>776,6</td><td class='num'>67,1</td><td class='num'>134,3</td><td class='num'>59,3</td><td class='num'>544,8</td></tr>
+<tr class='row-day'><td class='label'>05-ene</td><td class='num'>801,3</td><td class='num'>778,1</td><td class='num'>70,0</td><td class='num'>136,4</td><td class='num'>60,1</td><td class='num'>515,2</td></tr>
+<tr class='row-day'><td class='label'>06-ene</td><td class='num'>858,2</td><td class='num'>744,4</td><td class='num'>70,5</td><td class='num'>150,4</td><td class='num'>54,5</td><td class='num'>528,8</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 1</b></td><td class='num'><b>886,4</b></td><td class='num'><b>788,9</b></td><td class='num'><b>71,7</b></td><td class='num'><b>144,1</b></td><td class='num'><b>56,1</b></td><td class='num'><b>512,9</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 2</span>
+            <span class="acc-sub">11/01 → 13/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_2">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>11-ene</td><td class='num'>885,0</td><td class='num'>794,7</td><td class='num'>71,5</td><td class='num'>126,5</td><td class='num'>62,1</td><td class='num'>—</td></tr>
+<tr class='row-day'><td class='label'>12-ene</td><td class='num'>886,0</td><td class='num'>795,2</td><td class='num'>63,6</td><td class='num'>138,4</td><td class='num'>61,2</td><td class='num'>—</td></tr>
+<tr class='row-day'><td class='label'>13-ene</td><td class='num'>782,7</td><td class='num'>806,7</td><td class='num'>67,0</td><td class='num'>142,5</td><td class='num'>62,2</td><td class='num'>302,7</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 2</b></td><td class='num'><b>851,2</b></td><td class='num'><b>798,9</b></td><td class='num'><b>67,3</b></td><td class='num'><b>135,8</b></td><td class='num'><b>61,9</b></td><td class='num'><b>302,7</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 3</span>
+            <span class="acc-sub">14/01 → 20/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_3">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>14-ene</td><td class='num'>787,0</td><td class='num'>797,1</td><td class='num'>66,4</td><td class='num'>127,6</td><td class='num'>70,3</td><td class='num'>541,5</td></tr>
+<tr class='row-day'><td class='label'>15-ene</td><td class='num'>815,1</td><td class='num'>791,3</td><td class='num'>66,1</td><td class='num'>147,6</td><td class='num'>58,5</td><td class='num'>540,6</td></tr>
+<tr class='row-day'><td class='label'>16-ene</td><td class='num'>801,7</td><td class='num'>799,9</td><td class='num'>62,7</td><td class='num'>139,1</td><td class='num'>61,0</td><td class='num'>532,8</td></tr>
+<tr class='row-day'><td class='label'>17-ene</td><td class='num'>765,4</td><td class='num'>799,1</td><td class='num'>64,6</td><td class='num'>132,4</td><td class='num'>49,4</td><td class='num'>540,5</td></tr>
+<tr class='row-day'><td class='label'>18-ene</td><td class='num'>792,3</td><td class='num'>774,6</td><td class='num'>60,3</td><td class='num'>137,7</td><td class='num'>54,1</td><td class='num'>523,4</td></tr>
+<tr class='row-day'><td class='label'>19-ene</td><td class='num'>772,7</td><td class='num'>791,7</td><td class='num'>70,1</td><td class='num'>141,5</td><td class='num'>50,4</td><td class='num'>524,0</td></tr>
+<tr class='row-day'><td class='label'>20-ene</td><td class='num'>749,8</td><td class='num'>804,4</td><td class='num'>64,6</td><td class='num'>135,8</td><td class='num'>56,8</td><td class='num'>534,4</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 3</b></td><td class='num'><b>783,5</b></td><td class='num'><b>794,0</b></td><td class='num'><b>65,0</b></td><td class='num'><b>137,4</b></td><td class='num'><b>57,2</b></td><td class='num'><b>533,9</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 4</span>
+            <span class="acc-sub">21/01 → 27/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_4">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>21-ene</td><td class='num'>762,4</td><td class='num'>807,9</td><td class='num'>66,9</td><td class='num'>143,7</td><td class='num'>69,3</td><td class='num'>543,5</td></tr>
+<tr class='row-day'><td class='label'>22-ene</td><td class='num'>758,2</td><td class='num'>785,5</td><td class='num'>62,7</td><td class='num'>127,8</td><td class='num'>43,6</td><td class='num'>494,2</td></tr>
+<tr class='row-day'><td class='label'>23-ene</td><td class='num'>703,0</td><td class='num'>693,5</td><td class='num'>67,9</td><td class='num'>165,7</td><td class='num'>64,0</td><td class='num'>564,9</td></tr>
+<tr class='row-day'><td class='label'>24-ene</td><td class='num'>801,4</td><td class='num'>789,2</td><td class='num'>64,1</td><td class='num'>144,7</td><td class='num'>59,2</td><td class='num'>522,1</td></tr>
+<tr class='row-day'><td class='label'>25-ene</td><td class='num'>783,5</td><td class='num'>795,6</td><td class='num'>71,0</td><td class='num'>141,8</td><td class='num'>65,2</td><td class='num'>523,6</td></tr>
+<tr class='row-day'><td class='label'>26-ene</td><td class='num'>786,6</td><td class='num'>793,7</td><td class='num'>59,0</td><td class='num'>152,4</td><td class='num'>57,1</td><td class='num'>508,6</td></tr>
+<tr class='row-day'><td class='label'>27-ene</td><td class='num'>775,5</td><td class='num'>806,9</td><td class='num'>67,0</td><td class='num'>151,3</td><td class='num'>55,8</td><td class='num'>514,6</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 4</b></td><td class='num'><b>767,2</b></td><td class='num'><b>781,8</b></td><td class='num'><b>65,5</b></td><td class='num'><b>146,8</b></td><td class='num'><b>59,2</b></td><td class='num'><b>524,5</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 5</span>
+            <span class="acc-sub">28/01 → 03/02</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_5">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>28-ene</td><td class='num'>768,9</td><td class='num'>812,3</td><td class='num'>63,6</td><td class='num'>144,5</td><td class='num'>55,4</td><td class='num'>508,1</td></tr>
+<tr class='row-day'><td class='label'>29-ene</td><td class='num'>779,9</td><td class='num'>783,0</td><td class='num'>64,1</td><td class='num'>144,9</td><td class='num'>53,5</td><td class='num'>479,4</td></tr>
+<tr class='row-day'><td class='label'>30-ene</td><td class='num'>829,9</td><td class='num'>764,4</td><td class='num'>69,7</td><td class='num'>148,3</td><td class='num'>49,8</td><td class='num'>553,4</td></tr>
+<tr class='row-day'><td class='label'>31-ene</td><td class='num'>798,9</td><td class='num'>654,8</td><td class='num'>64,0</td><td class='num'>139,0</td><td class='num'>60,8</td><td class='num'>592,8</td></tr>
+<tr class='row-day'><td class='label'>01-feb</td><td class='num'>800,4</td><td class='num'>790,5</td><td class='num'>68,4</td><td class='num'>137,6</td><td class='num'>49,4</td><td class='num'>561,2</td></tr>
+<tr class='row-day'><td class='label'>02-feb</td><td class='num'>831,5</td><td class='num'>752,1</td><td class='num'>62,5</td><td class='num'>150,0</td><td class='num'>53,9</td><td class='num'>562,1</td></tr>
+<tr class='row-day'><td class='label'>03-feb</td><td class='num'>823,4</td><td class='num'>755,8</td><td class='num'>61,1</td><td class='num'>142,8</td><td class='num'>55,1</td><td class='num'>538,2</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 5</b></td><td class='num'><b>804,7</b></td><td class='num'><b>759,0</b></td><td class='num'><b>64,8</b></td><td class='num'><b>143,9</b></td><td class='num'><b>54,0</b></td><td class='num'><b>542,2</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" open>
+          <summary>
+            <span class="acc-title">Semana 6</span>
+            <span class="acc-sub">04/02 → 10/02</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_6">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>04-feb</td><td class='num'>807,8</td><td class='num'>778,6</td><td class='num'>66,7</td><td class='num'>145,2</td><td class='num'>55,0</td><td class='num'>538,1</td></tr>
+<tr class='row-day'><td class='label'>06-feb</td><td class='num'>808,3</td><td class='num'>765,0</td><td class='num'>62,5</td><td class='num'>145,3</td><td class='num'>51,5</td><td class='num'>515,9</td></tr>
+<tr class='row-day'><td class='label'>07-feb</td><td class='num'>779,3</td><td class='num'>768,4</td><td class='num'>64,0</td><td class='num'>144,0</td><td class='num'>53,2</td><td class='num'>534,7</td></tr>
+<tr class='row-day'><td class='label'>08-feb</td><td class='num'>788,1</td><td class='num'>789,8</td><td class='num'>67,3</td><td class='num'>146,1</td><td class='num'>53,9</td><td class='num'>540,0</td></tr>
+<tr class='row-day'><td class='label'>09-feb</td><td class='num'>807,4</td><td class='num'>778,3</td><td class='num'>57,2</td><td class='num'>145,9</td><td class='num'>52,9</td><td class='num'>551,3</td></tr>
+<tr class='row-day'><td class='label'>10-feb</td><td class='num'>791,2</td><td class='num'>748,7</td><td class='num'>66,8</td><td class='num'>138,4</td><td class='num'>69,5</td><td class='num'>582,6</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 6</b></td><td class='num'><b>797,0</b></td><td class='num'><b>771,5</b></td><td class='num'><b>64,1</b></td><td class='num'><b>144,1</b></td><td class='num'><b>56,0</b></td><td class='num'><b>543,8</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" open>
+          <summary>
+            <span class="acc-title">Semana 7</span>
+            <span class="acc-sub">11/02 → 11/02</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_7">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>11-feb</td><td class='num'>787,0</td><td class='num'>747,4</td><td class='num'>58,5</td><td class='num'>157,8</td><td class='num'>48,8</td><td class='num'>591,9</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 7</b></td><td class='num'><b>787,0</b></td><td class='num'><b>747,4</b></td><td class='num'><b>58,5</b></td><td class='num'><b>157,8</b></td><td class='num'><b>48,8</b></td><td class='num'><b>591,9</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+          </div>
+
+          
+    <div class="card">
+      <div class="card-h">
+        <div class="h2">Gráficos semanales por serie</div>
+        <div class="sub">Azul: promedio semanal · Gris: tendencia · Rojo: pérdidas promedio (si hay match con batería).</div>
+      </div>
+
+      <div class="grid-mini">
+        
+          <div class="mini-card">
+            <div class="mini-title">BAT CG01</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_BAT_CG01"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">BAT CG19</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_BAT_CG19"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">BAT CG20</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_BAT_CG20"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">BAT LH01</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_BAT_LH01"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">BAT LH02</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_BAT_LH02"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">BAT LH04</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_BAT_LH04"></canvas></div>
+          </div>
+        
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        
+                  new Chart(document.getElementById('wk_BAT_CG01'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [889.92570475, 829.7567214285715, 878.7472282857143, 886.4064664285714, 851.2159666666666, 783.4508798571429, 767.2231302857143, 804.7069234285715, 796.991536, 787.039],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 75.34066666666666, 82.06471428571429, 102.32371428571427, 45.794285714285714, 42.44942857142858, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [880.7514446296533, 868.9280915370848, 857.1047384445162, 845.2813853519477, 833.4580322593791, 821.6346791668107, 809.8113260742421, 797.9879729816736, 786.1646198891051, 774.3412667965365],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_BAT_CG19'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [797.6318125, 793.7432114285714, 778.8460230000001, 788.9470927142858, 798.8671463333334, 794.0122284285715, 781.7582735714286, 758.994276, 771.4717736666666, 747.423645],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 99.35966666666667, 93.53757142857144, 120.73142857142857, 138.78557142857144, 148.41485714285713, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [801.1728305051943, 796.7276566738811, 792.2824828425681, 787.837309011255, 783.3921351799419, 778.9469613486289, 774.5017875173157, 770.0566136860026, 765.6114398546896, 761.1662660233765],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_BAT_CG20'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [72.9938625, 73.42763787142857, 72.0473964, 71.65823717142857, 67.33724266666667, 64.96246661428572, 65.51039642857143, 64.78619034285714, 64.08611476666667, 58.49525],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, null, 0.321, 0.791, 0.129, 0.388, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [74.43054773437224, 72.89719923255406, 71.36385073073588, 69.8305022289177, 68.29715372709953, 66.76380522528135, 65.23045672346316, 63.69710822164498, 62.1637597198268, 60.63041121800862],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_BAT_LH01'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [86.078464025, 128.4747945714286, 144.88541714285714, 144.11852814285714, 135.77144433333333, 137.39532857142856, 146.76247828571428, 143.871724, 144.148747, 157.818756],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 2.1830000000000003, 6.8933333333333335, 9.095714285714285, 4.9028, 1.7690000000000001, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [116.2089073783333, 120.81416534031742, 125.41942330230155, 130.02468126428568, 134.6299392262698, 139.23519718825392, 143.84045515023806, 148.44571311222217, 153.0509710742063, 157.65622903619044],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_BAT_LH02'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [54.673967075, 51.42238242857143, 50.0343214, 56.14629375714286, 61.858744433333335, 57.213720714285714, 59.16765921428571, 53.98209092857143, 56.0174654, 48.8129463],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 2.0073333333333334, 3.8915714285714285, 1.8448571428571428, 1.831, 1.9661428571428572, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [54.835477870930724, 54.857140380750344, 54.87880289056997, 54.90046540038959, 54.92212791020922, 54.94379042002884, 54.96545292984846, 54.98711543966809, 55.00877794948771, 55.03044045930733],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_BAT_LH04'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [505.363344, 494.1877681428572, 484.88338257142857, 512.9023427142857, 302.668579, 533.9075042857143, 524.5182451428572, 542.1641428571429, 543.7746108333333, 591.9163],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 9.149000000000001, 22.568428571428573, 35.67342857142857, 16.44514285714286, 27.115714285714287, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [457.84930549567076, 468.02248693102433, 478.19566836637784, 488.3688498017314, 498.5420312370849, 508.7152126724385, 518.888394107792, 529.0615755431456, 539.2347569784991, 549.4079384138527],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+      })();
+    </script>
+    
+
+          <div class="card">
+            <div class="card-h">
+              <div class="h2">Análisis semanal (mermas / aumentos)</div>
+              <div class="sub">Promedios por semana operativa mié→mié + TOTAL + Δ + tendencia.</div>
+            </div>
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week">
+        <thead><tr><th></th><th>BAT CG01</th><th>BAT CG19</th><th>BAT CG20</th><th>BAT LH01</th><th>BAT LH02</th><th>BAT LH04</th><th>TOTAL</th><th>DIFERENCIA BRUTA</th><th>TENDENCIA SEMANAL TOTAL</th></tr></thead>
+        <tbody><tr class='row-week'><td class='label'><b>Prome Sem 50</b></td><td class='num'>889,9</td><td class='num'>797,6</td><td class='num'>73,0</td><td class='num'>86,1</td><td class='num'>54,7</td><td class='num'>505,4</td><td class='num'>2.406,7</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 51</b></td><td class='num'>829,8</td><td class='num'>793,7</td><td class='num'>73,4</td><td class='num'>128,5</td><td class='num'>51,4</td><td class='num'>494,2</td><td class='num'>2.371,0</td><td class='num'><span class='chg neg'>-35,7</span></td><td class='num'><span class='chg neg'>-1,48%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 52</b></td><td class='num'>878,7</td><td class='num'>778,8</td><td class='num'>72,0</td><td class='num'>144,9</td><td class='num'>50,0</td><td class='num'>484,9</td><td class='num'>2.409,4</td><td class='num'><span class='chg pos'>38,4</span></td><td class='num'><span class='chg pos'>1,62%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 1</b></td><td class='num'>886,4</td><td class='num'>788,9</td><td class='num'>71,7</td><td class='num'>144,1</td><td class='num'>56,1</td><td class='num'>512,9</td><td class='num'>2.460,2</td><td class='num'><span class='chg pos'>50,7</span></td><td class='num'><span class='chg pos'>2,11%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 2</b></td><td class='num'>851,2</td><td class='num'>798,9</td><td class='num'>67,3</td><td class='num'>135,8</td><td class='num'>61,9</td><td class='num'>302,7</td><td class='num'>2.217,7</td><td class='num'><span class='chg neg'>-242,5</span></td><td class='num'><span class='chg neg'>-9,86%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 3</b></td><td class='num'>783,5</td><td class='num'>794,0</td><td class='num'>65,0</td><td class='num'>137,4</td><td class='num'>57,2</td><td class='num'>533,9</td><td class='num'>2.370,9</td><td class='num'><span class='chg pos'>153,2</span></td><td class='num'><span class='chg pos'>6,91%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 4</b></td><td class='num'>767,2</td><td class='num'>781,8</td><td class='num'>65,5</td><td class='num'>146,8</td><td class='num'>59,2</td><td class='num'>524,5</td><td class='num'>2.344,9</td><td class='num'><span class='chg neg'>-26,0</span></td><td class='num'><span class='chg neg'>-1,10%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 5</b></td><td class='num'>804,7</td><td class='num'>759,0</td><td class='num'>64,8</td><td class='num'>143,9</td><td class='num'>54,0</td><td class='num'>542,2</td><td class='num'>2.368,5</td><td class='num'><span class='chg pos'>23,6</span></td><td class='num'><span class='chg pos'>1,00%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 6</b></td><td class='num'>797,0</td><td class='num'>771,5</td><td class='num'>64,1</td><td class='num'>144,1</td><td class='num'>56,0</td><td class='num'>543,8</td><td class='num'>2.376,5</td><td class='num'><span class='chg pos'>8,0</span></td><td class='num'><span class='chg pos'>0,34%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 7</b></td><td class='num'>787,0</td><td class='num'>747,4</td><td class='num'>58,5</td><td class='num'>157,8</td><td class='num'>48,8</td><td class='num'>591,9</td><td class='num'>2.391,5</td><td class='num'><span class='chg pos'>15,0</span></td><td class='num'><span class='chg pos'>0,63%</span></td></tr>
+<tr class='row-impact'><td class='label'><b>Suma Δ semanales</b></td><td class='num'><span class='chg neg'>-102,9</span></td><td class='num'><span class='chg neg'>-50,2</span></td><td class='num'><span class='chg neg'>-14,5</span></td><td class='num'><span class='chg pos'>71,7</span></td><td class='num'><span class='chg neg'>-5,9</span></td><td class='num'><span class='chg pos'>86,6</span></td><td class='num'><span class='chg neg'>-15,2</span></td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr class='row-trend'><td class='label'><b>Tendencia x flujo</b></td><td class='num'><span class='chg neg'>-11,82</span><br><span class='muted'>~-1,43%/sem</span></td><td class='num'><span class='chg neg'>-4,45</span><br><span class='muted'>~-0,57%/sem</span></td><td class='num'><span class='chg neg'>-1,53</span><br><span class='muted'>~-2,27%/sem</span></td><td class='num'><span class='chg pos'>4,61</span><br><span class='muted'>~3,36%/sem</span></td><td class='num'><span class='chg pos'>0,02</span><br><span class='muted'>~0,04%/sem</span></td><td class='num'><span class='chg pos'>10,17</span><br><span class='muted'>~2,02%/sem</span></td><td class='num'><span class='chg neg'>-3,00</span><br><span class='muted'>~-0,13%/sem</span></td><td class='num'>—</td><td class='num'>—</td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+
+          <div class="footer">
+            Generado desde PI Web API · MAX(acumulado) en ventana 06:45</b>–<b>07:15</b>
+          </div>
+        </div>
+        
+    <script>
+      function openAllWeeks(){ document.querySelectorAll('details.acc').forEach(d => d.open = true); }
+      function closeAllWeeks(){ document.querySelectorAll('details.acc').forEach(d => d.open = false); }
+    </script>
+    
+      </body>
+    </html>
+    

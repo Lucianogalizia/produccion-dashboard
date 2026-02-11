@@ -1,0 +1,1043 @@
+
+    <!doctype html>
+    <html lang="es">
+      <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Dashboard Producción</title>
+        
+<style>
+  :root{
+    --bg:#0b1020;
+    --line:rgba(255,255,255,.10);
+    --line2:rgba(255,255,255,.07);
+    --text:#e7ecff;
+    --muted:rgba(231,236,255,.70);
+    --muted2:rgba(231,236,255,.55);
+    --pos:#2ee59d;
+    --neg:#ff5c7a;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+  .wrap{max-width:1250px;margin:0 auto;padding:22px;}
+  .hero{padding:10px 4px 6px 4px;margin-bottom:10px;}
+  .hero-title{font-size:26px;font-weight:850;}
+  .hero-sub{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.45;}
+  .pill{display:inline-block;padding:2px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted);
+    margin-left:8px;background:rgba(255,255,255,.03);}
+
+  .card,.chart-card{
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.28);
+    margin:16px 0;
+  }
+  .card-h{margin-bottom:10px;}
+  .h2{font-size:16px;font-weight:850;}
+  .sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.35;}
+
+  .chart-wrap{
+    height:420px;border-radius:14px;border:1px solid var(--line2);
+    background:rgba(0,0,0,.10);padding:10px;
+  }
+
+  /* Buttons for accordion */
+  .acc-controls{display:flex;gap:10px;margin:8px 0 14px 0;}
+  .btn{
+    background:rgba(255,255,255,.06);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:8px 12px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+    font-size:12px;
+  }
+  .btn:hover{background:rgba(255,255,255,.10);}
+
+  /* Accordion */
+  details.acc{
+    border:1px solid var(--line2);
+    border-radius:14px;
+    background:rgba(0,0,0,.10);
+    margin:10px 0;
+    overflow:hidden;
+  }
+  details.acc summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 12px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    background:rgba(13,18,40,.65);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  details.acc summary::-webkit-details-marker{display:none;}
+  .acc-title{font-weight:900;}
+  .acc-sub{color:var(--muted2);font-size:12px;}
+  .acc-body{padding:12px;}
+
+  /* TABLES (FIT WIDTH) */
+  .table-wrap.no-scroll{
+    overflow:hidden;
+    border-radius:14px;
+    border:1px solid var(--line2);
+    background:rgba(0,0,0,.10);
+  }
+  table.tbl.fit{
+    width:100%;
+    table-layout:fixed;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:12.5px;
+  }
+  table.tbl.fit thead th{
+      position:sticky; top:0; z-index:2;
+      background:rgba(13,18,40,.98);
+      color:var(--muted);
+      text-align:right;
+      padding:10px 8px;
+      border-bottom:1px solid var(--line);
+
+      /* CLAVE: no truncar */
+      white-space:normal;
+      overflow:visible;
+      text-overflow:clip;
+
+      /* que corte bien nombres */
+      overflow-wrap:anywhere;
+      word-break:break-word;
+      line-height:1.1;
+      font-size:11px;
+    }
+
+  table.tbl.fit thead th:first-child{
+    text-align:left;
+    width:110px;
+  }
+  table.tbl.fit tbody td{
+    padding:9px 10px;
+    border-bottom:1px solid rgba(255,255,255,.06);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    vertical-align:top;
+  }
+  td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  td.label{font-weight:700;white-space:nowrap;width:110px;}
+
+  tr.row-day:nth-child(odd) td{background:rgba(255,255,255,.015);}
+  tr.row-day:hover td{background:rgba(255,255,255,.045);}
+
+  tr.row-week td{
+    background:rgba(99,102,241,.12)!important;
+    border-bottom:1px solid rgba(99,102,241,.25);
+    font-weight:750;
+  }
+  tr.row-impact td{
+    background:rgba(16,185,129,.08)!important;
+    border-bottom:1px solid rgba(16,185,129,.18);
+    font-weight:800;
+  }
+  tr.row-trend td{
+    background:rgba(234,179,8,.08)!important;
+    border-bottom:1px solid rgba(234,179,8,.18);
+    font-weight:800;
+  }
+
+  .chg.pos{color:var(--pos);font-weight:850;}
+  .chg.neg{color:var(--neg);font-weight:850;}
+  .muted{color:var(--muted2);font-weight:650;}
+
+  /* Weekly mini charts grid */
+  .grid-mini{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:12px;
+  }
+  @media (min-width: 1100px){
+    .grid-mini{grid-template-columns: repeat(3, minmax(0, 1fr));}
+  }
+  .mini-card{
+    border:1px solid var(--line2);
+    border-radius:14px;
+    background:rgba(0,0,0,.10);
+    padding:12px;
+  }
+  .mini-title{font-weight:900;}
+  .mini-sub{color:var(--muted2);font-size:12px;margin-top:3px;margin-bottom:10px;}
+  .mini-chart{height:220px;}
+
+  .footer{color:var(--muted2);font-size:12px;margin-top:18px;padding:8px 2px;}
+</style>
+
+      </head>
+      <body>
+        <div class="wrap">
+          
+    <div class="hero">
+      <div class="hero-title">Dashboard – Acumulados diarios + análisis semanal</div>
+      <div class="hero-sub">
+        Cierre diario = <b>MAX(acumulado)</b> en ventana <b>06:45</b>–<b>07:15</b>.
+        <span class="pill">Período: 2025-12-13 → 2026-02-11</span>
+        <span class="pill">Cierre: 2026-02-11 07:15</span>
+      </div>
+    </div>
+    
+
+          
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="h2">Acumulados finales (interactivo)</div>
+          <div class="sub">Zoom/pan + hover.</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="accChart"></canvas>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+    <script>
+      const accLabels = ["2025-12-13", "2025-12-14", "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18", "2025-12-19", "2025-12-20", "2025-12-21", "2025-12-22", "2025-12-23", "2025-12-24", "2025-12-25", "2025-12-26", "2025-12-27", "2025-12-28", "2025-12-29", "2025-12-30", "2025-12-31", "2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-11", "2026-01-12", "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16", "2026-01-17", "2026-01-18", "2026-01-19", "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23", "2026-01-24", "2026-01-25", "2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31", "2026-02-01", "2026-02-02", "2026-02-03", "2026-02-04", "2026-02-06", "2026-02-07", "2026-02-08", "2026-02-09", "2026-02-10", "2026-02-11"];
+      const accData = {
+        labels: accLabels,
+        datasets: [{
+          label: "LH01",
+          data: [2370.52, 2443.376, 2447.272, 2441.544, 2493.096, 2404.872, 2414.968, 2374.848, 2348.456, 2325.592, 2311.616, 2342.888, 2453.304, 2396.68, 2361.2, 2374.744, 2426.864, 2414.92, 2503.448, 2509.472, 2514.136, 2541.144, 2488.664, 2373.616, 2421.2, 2477.76, 2485.544, 2404.84, 2408.72, 2439.608, 2417.112, 2370.192, 2362.216, 2367.472, 2362.424, 2410.36, 2289.016, 2270.0, 2393.384, 2391.312, 2371.368, 2389.52, 2369.24, 2342.448, 2424.192, 2318.976, 2423.248, 2429.464, 2394.864, 2408.632, 2366.944, 2359.152, 2400.744, 2408.848, 2416.472, 2409.344],
+          borderColor: "rgb(99, 102, 241)",
+          backgroundColor: "rgb(99, 102, 241)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "LH08",
+          data: [2957.971, 2847.275, 2954.415, 2974.082, 2964.3959999999997, 3066.0519999999997, 2984.558, 2663.736, 3124.245, 3117.01, 3029.883, 3148.389, 3188.362, 3130.349, 3160.9449999999997, 3150.6459999999997, 3122.09, 3125.462, 3100.6719999999996, 3048.452, 3033.717, 3087.7219999999998, 3124.974, 3015.522, 3084.3770000000004, 3059.339, 3026.1, 3043.421, 3076.763, 3114.023, 3133.334, 3124.2160000000003, 3128.5460000000003, 3142.584, 2954.91, 3042.4359999999997, 3127.4260000000004, 2896.98, 2901.83, 3036.752, 3067.2560000000003, 3030.58, 2882.056, 2880.29, 2969.8680000000004, 2975.688, 2949.552, 2964.346, 2984.11, 2993.322, 3035.88, 2863.058, 2826.422, 2808.842, 2945.1639999999998, 2938.7560000000003],
+          borderColor: "rgb(16, 185, 129)",
+          backgroundColor: "rgb(16, 185, 129)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "RCG07",
+          data: [3460.11316, 3318.79171, 3224.1654099999996, 3383.56018, 3414.91836, 3411.44336, 3597.4892600000003, 3655.48059, 3656.4047, 3636.61282, 3630.21191, 3611.8400899999997, 3571.6801400000004, 3582.694, 3418.11572, 3516.63281, 3539.52136, 3611.20935, 3622.4614199999996, 3612.8953899999997, 3597.45679, 3605.08954, 3578.9291000000003, 3543.57482, 3547.01001, 3409.80872, 3368.31108, 3607.0170799999996, 3598.4200499999997, 3679.41223, 3623.46558, 3638.29554, 3619.6036400000003, 3633.15088, 3660.0617700000003, 3654.74341, 3258.9215, 3969.1130700000003, 3959.32214, 3598.1954299999998, 3908.59811, 3818.43909, 3809.0238, 3785.29968, 3817.3368, 3811.34778, 3732.6699200000003, 3742.49328, 3795.79541, 3755.6801699999996, 3757.5319799999997, 3767.3295900000003, 3801.1046100000003, 3761.62561, 3753.56396, 3780.19006],
+          borderColor: "rgb(239, 68, 68)",
+          backgroundColor: "rgb(239, 68, 68)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "PE CE02",
+          data: [4824.280000000001, 4824.552, 4853.9439999999995, 4888.96, 5008.448, 5015.496, 5067.4, 5169.536, 4944.152, 4896.192, 4946.424, 4909.392, 5127.552, 5060.224, 4980.264, 4821.064, 4973.984, 4984.264, 5008.32, 4973.032, 5054.224, 5075.024, 5083.719999999999, 4961.296, 4787.184, 5030.352, 5024.976000000001, 4883.304, 4958.16, 4878.360000000001, 4931.048000000001, 5087.352, 5003.2080000000005, 4998.024, 4944.88, 4946.08, 4848.168, 4952.2880000000005, 5024.496, 4990.824, 4950.904, 4832.592000000001, 4780.384, 4757.392, 4601.768, 4798.576, 4623.407999999999, 4592.248, 4689.567999999999, 4756.472, 4665.784, 4715.871999999999, 4690.552, 4692.5599999999995, 4628.959999999999, 4807.8240000000005],
+          borderColor: "rgb(234, 179, 8)",
+          backgroundColor: "rgb(234, 179, 8)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        },{
+          label: "CE10",
+          data: [280.8873, 244.017471, 271.696777, 269.248016, 251.080475, 277.323029, 287.327637, 273.058838, 274.508, 272.887848, 270.955353, 286.8098, 274.806915, 266.0151, 276.675842, 275.295837, 267.7026, 275.534637, 264.861237, 271.99115, 257.68512, 280.5591, 270.586823, 287.875336, 287.5011, 219.017532, 279.5027, 267.996643, 270.656525, 271.222137, 271.731, 280.931366, 263.8576, 261.2626, 266.382538, 262.473541, 253.413956, 263.015717, 296.011139, 282.611237, 264.953156, 255.731674, 268.057922, 284.2696, 294.65683, 272.5799, 271.200317, 235.898468, 242.960342, 240.8493, 280.184021, 279.3622, 271.131775, 277.7259, 267.1846, 265.6056],
+          borderColor: "rgb(59, 130, 246)",
+          backgroundColor: "rgb(59, 130, 246)",
+          tension: 0.25,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          borderWidth: 2,
+          spanGaps: true
+        }]
+      };
+
+      new Chart(document.getElementById('accChart'), {
+        type: 'line',
+        data: accData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: false },
+          plugins: {
+            legend: { position: 'top', labels: { color: 'rgba(231,236,255,.9)' } },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const v = ctx.parsed.y;
+                  if (v === null || v === undefined) return ctx.dataset.label + ': —';
+                  return ctx.dataset.label + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                }
+              }
+            },
+            zoom: {
+              zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' },
+              pan:  { enabled: true, mode: 'x' }
+            }
+          },
+          scales: {
+            x: { ticks: { color: 'rgba(231,236,255,.75)' }, grid: { color: 'rgba(255,255,255,.06)' } },
+            y: { ticks: { color: 'rgba(231,236,255,.75)' }, grid: { color: 'rgba(255,255,255,.06)' } }
+          }
+        }
+      });
+    </script>
+    
+
+          <div class="card">
+            <div class="card-h">
+              <div class="h2">Planilla (ACUMULADO DIARIO) + Prome Sem (por semana)</div>
+              <div class="sub">Acordeón: desplegás solo las semanas que querés ver. Por defecto se abren las últimas 2.</div>
+            </div>
+            
+    <div class="acc-controls">
+      <button class="btn" onclick="openAllWeeks()">Expandir todo</button>
+      <button class="btn" onclick="closeAllWeeks()">Colapsar todo</button>
+    </div>
+    
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 50</span>
+            <span class="acc-sub">13/12 → 16/12</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_50">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>13-dic</td><td class='num'>2.370,5</td><td class='num'>2.958,0</td><td class='num'>3.460,1</td><td class='num'>4.824,3</td><td class='num'>280,9</td></tr>
+<tr class='row-day'><td class='label'>14-dic</td><td class='num'>2.443,4</td><td class='num'>2.847,3</td><td class='num'>3.318,8</td><td class='num'>4.824,6</td><td class='num'>244,0</td></tr>
+<tr class='row-day'><td class='label'>15-dic</td><td class='num'>2.447,3</td><td class='num'>2.954,4</td><td class='num'>3.224,2</td><td class='num'>4.853,9</td><td class='num'>271,7</td></tr>
+<tr class='row-day'><td class='label'>16-dic</td><td class='num'>2.441,5</td><td class='num'>2.974,1</td><td class='num'>3.383,6</td><td class='num'>4.889,0</td><td class='num'>269,2</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 50</b></td><td class='num'><b>2.425,7</b></td><td class='num'><b>2.933,4</b></td><td class='num'><b>3.346,7</b></td><td class='num'><b>4.847,9</b></td><td class='num'><b>266,5</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 51</span>
+            <span class="acc-sub">17/12 → 23/12</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_51">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>17-dic</td><td class='num'>2.493,1</td><td class='num'>2.964,4</td><td class='num'>3.414,9</td><td class='num'>5.008,4</td><td class='num'>251,1</td></tr>
+<tr class='row-day'><td class='label'>18-dic</td><td class='num'>2.404,9</td><td class='num'>3.066,1</td><td class='num'>3.411,4</td><td class='num'>5.015,5</td><td class='num'>277,3</td></tr>
+<tr class='row-day'><td class='label'>19-dic</td><td class='num'>2.415,0</td><td class='num'>2.984,6</td><td class='num'>3.597,5</td><td class='num'>5.067,4</td><td class='num'>287,3</td></tr>
+<tr class='row-day'><td class='label'>20-dic</td><td class='num'>2.374,8</td><td class='num'>2.663,7</td><td class='num'>3.655,5</td><td class='num'>5.169,5</td><td class='num'>273,1</td></tr>
+<tr class='row-day'><td class='label'>21-dic</td><td class='num'>2.348,5</td><td class='num'>3.124,2</td><td class='num'>3.656,4</td><td class='num'>4.944,2</td><td class='num'>274,5</td></tr>
+<tr class='row-day'><td class='label'>22-dic</td><td class='num'>2.325,6</td><td class='num'>3.117,0</td><td class='num'>3.636,6</td><td class='num'>4.896,2</td><td class='num'>272,9</td></tr>
+<tr class='row-day'><td class='label'>23-dic</td><td class='num'>2.311,6</td><td class='num'>3.029,9</td><td class='num'>3.630,2</td><td class='num'>4.946,4</td><td class='num'>271,0</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 51</b></td><td class='num'><b>2.381,9</b></td><td class='num'><b>2.992,8</b></td><td class='num'><b>3.571,8</b></td><td class='num'><b>5.006,8</b></td><td class='num'><b>272,4</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 52</span>
+            <span class="acc-sub">24/12 → 30/12</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_52">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>24-dic</td><td class='num'>2.342,9</td><td class='num'>3.148,4</td><td class='num'>3.611,8</td><td class='num'>4.909,4</td><td class='num'>286,8</td></tr>
+<tr class='row-day'><td class='label'>25-dic</td><td class='num'>2.453,3</td><td class='num'>3.188,4</td><td class='num'>3.571,7</td><td class='num'>5.127,6</td><td class='num'>274,8</td></tr>
+<tr class='row-day'><td class='label'>26-dic</td><td class='num'>2.396,7</td><td class='num'>3.130,3</td><td class='num'>3.582,7</td><td class='num'>5.060,2</td><td class='num'>266,0</td></tr>
+<tr class='row-day'><td class='label'>27-dic</td><td class='num'>2.361,2</td><td class='num'>3.160,9</td><td class='num'>3.418,1</td><td class='num'>4.980,3</td><td class='num'>276,7</td></tr>
+<tr class='row-day'><td class='label'>28-dic</td><td class='num'>2.374,7</td><td class='num'>3.150,6</td><td class='num'>3.516,6</td><td class='num'>4.821,1</td><td class='num'>275,3</td></tr>
+<tr class='row-day'><td class='label'>29-dic</td><td class='num'>2.426,9</td><td class='num'>3.122,1</td><td class='num'>3.539,5</td><td class='num'>4.974,0</td><td class='num'>267,7</td></tr>
+<tr class='row-day'><td class='label'>30-dic</td><td class='num'>2.414,9</td><td class='num'>3.125,5</td><td class='num'>3.611,2</td><td class='num'>4.984,3</td><td class='num'>275,5</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 52</b></td><td class='num'><b>2.395,8</b></td><td class='num'><b>3.146,6</b></td><td class='num'><b>3.550,2</b></td><td class='num'><b>4.979,5</b></td><td class='num'><b>274,7</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 1</span>
+            <span class="acc-sub">31/12 → 06/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_1">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>31-dic</td><td class='num'>2.503,4</td><td class='num'>3.100,7</td><td class='num'>3.622,5</td><td class='num'>5.008,3</td><td class='num'>264,9</td></tr>
+<tr class='row-day'><td class='label'>01-ene</td><td class='num'>2.509,5</td><td class='num'>3.048,5</td><td class='num'>3.612,9</td><td class='num'>4.973,0</td><td class='num'>272,0</td></tr>
+<tr class='row-day'><td class='label'>02-ene</td><td class='num'>2.514,1</td><td class='num'>3.033,7</td><td class='num'>3.597,5</td><td class='num'>5.054,2</td><td class='num'>257,7</td></tr>
+<tr class='row-day'><td class='label'>03-ene</td><td class='num'>2.541,1</td><td class='num'>3.087,7</td><td class='num'>3.605,1</td><td class='num'>5.075,0</td><td class='num'>280,6</td></tr>
+<tr class='row-day'><td class='label'>04-ene</td><td class='num'>2.488,7</td><td class='num'>3.125,0</td><td class='num'>3.578,9</td><td class='num'>5.083,7</td><td class='num'>270,6</td></tr>
+<tr class='row-day'><td class='label'>05-ene</td><td class='num'>2.373,6</td><td class='num'>3.015,5</td><td class='num'>3.543,6</td><td class='num'>4.961,3</td><td class='num'>287,9</td></tr>
+<tr class='row-day'><td class='label'>06-ene</td><td class='num'>2.421,2</td><td class='num'>3.084,4</td><td class='num'>3.547,0</td><td class='num'>4.787,2</td><td class='num'>287,5</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 1</b></td><td class='num'><b>2.478,8</b></td><td class='num'><b>3.070,8</b></td><td class='num'><b>3.586,8</b></td><td class='num'><b>4.991,8</b></td><td class='num'><b>274,4</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 2</span>
+            <span class="acc-sub">11/01 → 13/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_2">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>11-ene</td><td class='num'>2.477,8</td><td class='num'>3.059,3</td><td class='num'>3.409,8</td><td class='num'>5.030,4</td><td class='num'>219,0</td></tr>
+<tr class='row-day'><td class='label'>12-ene</td><td class='num'>2.485,5</td><td class='num'>3.026,1</td><td class='num'>3.368,3</td><td class='num'>5.025,0</td><td class='num'>279,5</td></tr>
+<tr class='row-day'><td class='label'>13-ene</td><td class='num'>2.404,8</td><td class='num'>3.043,4</td><td class='num'>3.607,0</td><td class='num'>4.883,3</td><td class='num'>268,0</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 2</b></td><td class='num'><b>2.456,0</b></td><td class='num'><b>3.043,0</b></td><td class='num'><b>3.461,7</b></td><td class='num'><b>4.979,5</b></td><td class='num'><b>255,5</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 3</span>
+            <span class="acc-sub">14/01 → 20/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_3">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>14-ene</td><td class='num'>2.408,7</td><td class='num'>3.076,8</td><td class='num'>3.598,4</td><td class='num'>4.958,2</td><td class='num'>270,7</td></tr>
+<tr class='row-day'><td class='label'>15-ene</td><td class='num'>2.439,6</td><td class='num'>3.114,0</td><td class='num'>3.679,4</td><td class='num'>4.878,4</td><td class='num'>271,2</td></tr>
+<tr class='row-day'><td class='label'>16-ene</td><td class='num'>2.417,1</td><td class='num'>3.133,3</td><td class='num'>3.623,5</td><td class='num'>4.931,0</td><td class='num'>271,7</td></tr>
+<tr class='row-day'><td class='label'>17-ene</td><td class='num'>2.370,2</td><td class='num'>3.124,2</td><td class='num'>3.638,3</td><td class='num'>5.087,4</td><td class='num'>280,9</td></tr>
+<tr class='row-day'><td class='label'>18-ene</td><td class='num'>2.362,2</td><td class='num'>3.128,5</td><td class='num'>3.619,6</td><td class='num'>5.003,2</td><td class='num'>263,9</td></tr>
+<tr class='row-day'><td class='label'>19-ene</td><td class='num'>2.367,5</td><td class='num'>3.142,6</td><td class='num'>3.633,2</td><td class='num'>4.998,0</td><td class='num'>261,3</td></tr>
+<tr class='row-day'><td class='label'>20-ene</td><td class='num'>2.362,4</td><td class='num'>2.954,9</td><td class='num'>3.660,1</td><td class='num'>4.944,9</td><td class='num'>266,4</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 3</b></td><td class='num'><b>2.389,7</b></td><td class='num'><b>3.096,3</b></td><td class='num'><b>3.636,1</b></td><td class='num'><b>4.971,6</b></td><td class='num'><b>269,4</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 4</span>
+            <span class="acc-sub">21/01 → 27/01</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_4">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>21-ene</td><td class='num'>2.410,4</td><td class='num'>3.042,4</td><td class='num'>3.654,7</td><td class='num'>4.946,1</td><td class='num'>262,5</td></tr>
+<tr class='row-day'><td class='label'>22-ene</td><td class='num'>2.289,0</td><td class='num'>3.127,4</td><td class='num'>3.258,9</td><td class='num'>4.848,2</td><td class='num'>253,4</td></tr>
+<tr class='row-day'><td class='label'>23-ene</td><td class='num'>2.270,0</td><td class='num'>2.897,0</td><td class='num'>3.969,1</td><td class='num'>4.952,3</td><td class='num'>263,0</td></tr>
+<tr class='row-day'><td class='label'>24-ene</td><td class='num'>2.393,4</td><td class='num'>2.901,8</td><td class='num'>3.959,3</td><td class='num'>5.024,5</td><td class='num'>296,0</td></tr>
+<tr class='row-day'><td class='label'>25-ene</td><td class='num'>2.391,3</td><td class='num'>3.036,8</td><td class='num'>3.598,2</td><td class='num'>4.990,8</td><td class='num'>282,6</td></tr>
+<tr class='row-day'><td class='label'>26-ene</td><td class='num'>2.371,4</td><td class='num'>3.067,3</td><td class='num'>3.908,6</td><td class='num'>4.950,9</td><td class='num'>265,0</td></tr>
+<tr class='row-day'><td class='label'>27-ene</td><td class='num'>2.389,5</td><td class='num'>3.030,6</td><td class='num'>3.818,4</td><td class='num'>4.832,6</td><td class='num'>255,7</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 4</b></td><td class='num'><b>2.359,3</b></td><td class='num'><b>3.014,8</b></td><td class='num'><b>3.738,2</b></td><td class='num'><b>4.935,1</b></td><td class='num'><b>268,3</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" >
+          <summary>
+            <span class="acc-title">Semana 5</span>
+            <span class="acc-sub">28/01 → 03/02</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_5">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>28-ene</td><td class='num'>2.369,2</td><td class='num'>2.882,1</td><td class='num'>3.809,0</td><td class='num'>4.780,4</td><td class='num'>268,1</td></tr>
+<tr class='row-day'><td class='label'>29-ene</td><td class='num'>2.342,4</td><td class='num'>2.880,3</td><td class='num'>3.785,3</td><td class='num'>4.757,4</td><td class='num'>284,3</td></tr>
+<tr class='row-day'><td class='label'>30-ene</td><td class='num'>2.424,2</td><td class='num'>2.969,9</td><td class='num'>3.817,3</td><td class='num'>4.601,8</td><td class='num'>294,7</td></tr>
+<tr class='row-day'><td class='label'>31-ene</td><td class='num'>2.319,0</td><td class='num'>2.975,7</td><td class='num'>3.811,3</td><td class='num'>4.798,6</td><td class='num'>272,6</td></tr>
+<tr class='row-day'><td class='label'>01-feb</td><td class='num'>2.423,2</td><td class='num'>2.949,6</td><td class='num'>3.732,7</td><td class='num'>4.623,4</td><td class='num'>271,2</td></tr>
+<tr class='row-day'><td class='label'>02-feb</td><td class='num'>2.429,5</td><td class='num'>2.964,3</td><td class='num'>3.742,5</td><td class='num'>4.592,2</td><td class='num'>235,9</td></tr>
+<tr class='row-day'><td class='label'>03-feb</td><td class='num'>2.394,9</td><td class='num'>2.984,1</td><td class='num'>3.795,8</td><td class='num'>4.689,6</td><td class='num'>243,0</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 5</b></td><td class='num'><b>2.386,1</b></td><td class='num'><b>2.943,7</b></td><td class='num'><b>3.784,9</b></td><td class='num'><b>4.691,9</b></td><td class='num'><b>267,1</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" open>
+          <summary>
+            <span class="acc-title">Semana 6</span>
+            <span class="acc-sub">04/02 → 10/02</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_6">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>04-feb</td><td class='num'>2.408,6</td><td class='num'>2.993,3</td><td class='num'>3.755,7</td><td class='num'>4.756,5</td><td class='num'>240,8</td></tr>
+<tr class='row-day'><td class='label'>06-feb</td><td class='num'>2.366,9</td><td class='num'>3.035,9</td><td class='num'>3.757,5</td><td class='num'>4.665,8</td><td class='num'>280,2</td></tr>
+<tr class='row-day'><td class='label'>07-feb</td><td class='num'>2.359,2</td><td class='num'>2.863,1</td><td class='num'>3.767,3</td><td class='num'>4.715,9</td><td class='num'>279,4</td></tr>
+<tr class='row-day'><td class='label'>08-feb</td><td class='num'>2.400,7</td><td class='num'>2.826,4</td><td class='num'>3.801,1</td><td class='num'>4.690,6</td><td class='num'>271,1</td></tr>
+<tr class='row-day'><td class='label'>09-feb</td><td class='num'>2.408,8</td><td class='num'>2.808,8</td><td class='num'>3.761,6</td><td class='num'>4.692,6</td><td class='num'>277,7</td></tr>
+<tr class='row-day'><td class='label'>10-feb</td><td class='num'>2.416,5</td><td class='num'>2.945,2</td><td class='num'>3.753,6</td><td class='num'>4.629,0</td><td class='num'>267,2</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 6</b></td><td class='num'><b>2.393,5</b></td><td class='num'><b>2.912,1</b></td><td class='num'><b>3.766,1</b></td><td class='num'><b>4.691,7</b></td><td class='num'><b>269,4</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+
+        <details class="acc" open>
+          <summary>
+            <span class="acc-title">Semana 7</span>
+            <span class="acc-sub">11/02 → 11/02</span>
+          </summary>
+          <div class="acc-body">
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week_7">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th></tr></thead>
+        <tbody><tr class='row-day'><td class='label'>11-feb</td><td class='num'>2.409,3</td><td class='num'>2.938,8</td><td class='num'>3.780,2</td><td class='num'>4.807,8</td><td class='num'>265,6</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 7</b></td><td class='num'><b>2.409,3</b></td><td class='num'><b>2.938,8</b></td><td class='num'><b>3.780,2</b></td><td class='num'><b>4.807,8</b></td><td class='num'><b>265,6</b></td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+        </details>
+        
+          </div>
+
+          
+    <div class="card">
+      <div class="card-h">
+        <div class="h2">Gráficos semanales por serie</div>
+        <div class="sub">Azul: promedio semanal · Gris: tendencia · Rojo: pérdidas promedio (si hay match con batería).</div>
+      </div>
+
+      <div class="grid-mini">
+        
+          <div class="mini-card">
+            <div class="mini-title">LH01</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_LH01"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">LH08</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_LH08"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">RCG07</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_RCG07"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">PE CE02</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_PE_CE02"></canvas></div>
+          </div>
+        
+          <div class="mini-card">
+            <div class="mini-title">CE10</div>
+            <div class="mini-sub">Promedio semanal + tendencia (+ pérdidas prom. si aplica)</div>
+            <div class="mini-chart"><canvas id="wk_CE10"></canvas></div>
+          </div>
+        
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        
+                  new Chart(document.getElementById('wk_LH01'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [2425.678, 2381.921142857143, 2395.7999999999997, 2478.8114285714287, 2456.0480000000002, 2389.677714285714, 2359.2799999999997, 2386.0617142857145, 2393.4653333333335, 2409.344],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 188.03966666666665, 209.27661904761908, 270.46014285714284, 207.8878, 222.10314285714287, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [2422.3319878787865, 2419.060153535352, 2415.788319191918, 2412.5164848484837, 2409.24465050505, 2405.9728161616154, 2402.7009818181814, 2399.429147474747, 2396.157313131313, 2392.8854787878786],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_LH08'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [2933.43575, 2992.8399999999997, 3146.6061428571425, 3070.7765714285715, 3042.9533333333334, 3096.3394285714285, 3014.7514285714287, 2943.7014285714286, 2912.114666666667, 2938.7560000000003],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 302.0066666666666, 403.5954285714286, 426.8191428571429, 444.39057142857143, 386.211, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [3054.1295110389597, 3044.1512808080797, 3034.1730505771993, 3024.1948203463194, 3014.216590115439, 3004.238359884559, 2994.2601296536786, 2984.2818994227987, 2974.3036691919183, 2964.3254389610383],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_RCG07'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [3346.657615, 3571.794428571429, 3550.241924285714, 3586.773867142857, 3461.7122933333335, 3636.058527142857, 3738.1903928571433, 3784.852381428572, 3766.13932, 3780.19006],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 597.828, 527.0778571428572, 448.9135952380952, 404.1771428571428, 479.58245714285715, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [3429.610508021643, 3472.4217464559865, 3515.23298489033, 3558.0442233246736, 3600.855461759017, 3643.6667001933606, 3686.477938627704, 3729.289177062048, 3772.100415496391, 3814.911653930735],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_PE_CE02'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [4847.934, 5006.806857142858, 4979.534857142857, 4991.828571428572, 4979.544000000001, 4971.576, 4935.050285714286, 4691.906285714285, 4691.7, 4807.8240000000005],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 888.473, 819.5973214285714, 830.730138095238, 995.0964642857142, 918.2901904761906, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [5004.4573142857125, 4979.104685714284, 4953.752057142855, 4928.399428571426, 4903.046799999997, 4877.6941714285695, 4852.341542857141, 4826.988914285712, 4801.636285714283, 4776.283657142854],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+                  new Chart(document.getElementById('wk_CE10'), {
+                    type: 'line',
+                    data: {
+                      labels: ["Sem 50", "Sem 51", "Sem 52", "Sem 1", "Sem 2", "Sem 3", "Sem 4", "Sem 5", "Sem 6", "Sem 7"],
+                      datasets: [
+                        {
+                          label: 'Prom. semanal',
+                          data: [266.462391, 272.44874, 274.691533, 274.43712371428575, 255.505625, 269.4348237142857, 268.3157742857143, 267.08905414285715, 269.4062993333333, 265.6056],
+                          borderColor: 'rgba(99, 102, 241, 0.95)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.95)',
+                          pointRadius: 2,
+                          pointHoverRadius: 5,
+                          borderWidth: 2,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 3
+                        },
+                        {
+                          label: 'Pérdidas prom.',
+                          data: [null, null, null, null, 1965.4929999999997, 2057.2885714285712, 2029.1702857142857, 2133.4447857142854, 1988.8674285714285, null],
+                          borderColor: 'rgba(255, 59, 59, 0.95)',
+                          backgroundColor: 'rgba(255, 59, 59, 0.95)',
+                          pointRadius: 0,
+                          borderWidth: 4,
+                          tension: 0.25,
+                          spanGaps: true,
+                          order: 2,
+                          yAxisID: 'y1'
+                        },
+                        {
+                          label: 'Tendencia',
+                          data: [270.2884813515151, 269.855418033189, 269.4223547148628, 268.9892913965367, 268.5562280782106, 268.1231647598845, 267.69010144155834, 267.25703812323223, 266.82397480490613, 266.39091148657997],
+                          borderColor: 'rgba(231,236,255,.65)',
+                          borderDash: [6,6],
+                          pointRadius: 0,
+                          borderWidth: 2,
+                          tension: 0,
+                          spanGaps: true,
+                          order: 1
+                        }
+                      ]
+                    },
+                    options: {
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                          callbacks: {
+                            label: function(ctx) {
+                              const ds = ctx.dataset.label || '';
+                              const v = ctx.parsed.y;
+                              if (v === null || v === undefined || Number.isNaN(v)) return ds + ': —';
+                              return ds + ': ' + v.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+                            }
+                          }
+                        }
+                      },
+                      scales: {
+                        x: {
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          ticks: { color: 'rgba(231,236,255,.65)' },
+                          grid: { color: 'rgba(255,255,255,.06)' }
+                        },
+                        y1: {
+                          type: 'linear',
+                          position: 'right',
+                          ticks: { color: 'rgba(255, 59, 59, 0.9)' },
+                          grid: { drawOnChartArea: false }
+                        }
+                      }
+                    }
+                  });
+                
+      })();
+    </script>
+    
+
+          <div class="card">
+            <div class="card-h">
+              <div class="h2">Análisis semanal (mermas / aumentos)</div>
+              <div class="sub">Tabla resumen (promedios por semana operativa mié→mié).</div>
+            </div>
+            
+    <div class="table-wrap no-scroll">
+      <table class="tbl fit" id="tbl_week">
+        <thead><tr><th></th><th>LH01</th><th>LH08</th><th>RCG07</th><th>PE CE02</th><th>CE10</th><th>TOTAL</th><th>DIFERENCIA BRUTA</th><th>TENDENCIA SEMANAL TOTAL</th></tr></thead>
+        <tbody><tr class='row-week'><td class='label'><b>Prome Sem 50</b></td><td class='num'>2.425,7</td><td class='num'>2.933,4</td><td class='num'>3.346,7</td><td class='num'>4.847,9</td><td class='num'>266,5</td><td class='num'>13.820,2</td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 51</b></td><td class='num'>2.381,9</td><td class='num'>2.992,8</td><td class='num'>3.571,8</td><td class='num'>5.006,8</td><td class='num'>272,4</td><td class='num'>14.225,8</td><td class='num'><span class='chg pos'>405,6</span></td><td class='num'><span class='chg pos'>2,94%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 52</b></td><td class='num'>2.395,8</td><td class='num'>3.146,6</td><td class='num'>3.550,2</td><td class='num'>4.979,5</td><td class='num'>274,7</td><td class='num'>14.346,9</td><td class='num'><span class='chg pos'>121,1</span></td><td class='num'><span class='chg pos'>0,85%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 1</b></td><td class='num'>2.478,8</td><td class='num'>3.070,8</td><td class='num'>3.586,8</td><td class='num'>4.991,8</td><td class='num'>274,4</td><td class='num'>14.402,6</td><td class='num'><span class='chg pos'>55,8</span></td><td class='num'><span class='chg pos'>0,39%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 2</b></td><td class='num'>2.456,0</td><td class='num'>3.043,0</td><td class='num'>3.461,7</td><td class='num'>4.979,5</td><td class='num'>255,5</td><td class='num'>14.195,8</td><td class='num'><span class='chg neg'>-206,9</span></td><td class='num'><span class='chg neg'>-1,44%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 3</b></td><td class='num'>2.389,7</td><td class='num'>3.096,3</td><td class='num'>3.636,1</td><td class='num'>4.971,6</td><td class='num'>269,4</td><td class='num'>14.363,1</td><td class='num'><span class='chg pos'>167,3</span></td><td class='num'><span class='chg pos'>1,18%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 4</b></td><td class='num'>2.359,3</td><td class='num'>3.014,8</td><td class='num'>3.738,2</td><td class='num'>4.935,1</td><td class='num'>268,3</td><td class='num'>14.315,6</td><td class='num'><span class='chg neg'>-47,5</span></td><td class='num'><span class='chg neg'>-0,33%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 5</b></td><td class='num'>2.386,1</td><td class='num'>2.943,7</td><td class='num'>3.784,9</td><td class='num'>4.691,9</td><td class='num'>267,1</td><td class='num'>14.073,6</td><td class='num'><span class='chg neg'>-242,0</span></td><td class='num'><span class='chg neg'>-1,69%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 6</b></td><td class='num'>2.393,5</td><td class='num'>2.912,1</td><td class='num'>3.766,1</td><td class='num'>4.691,7</td><td class='num'>269,4</td><td class='num'>14.032,8</td><td class='num'><span class='chg neg'>-40,8</span></td><td class='num'><span class='chg neg'>-0,29%</span></td></tr>
+<tr class='row-week'><td class='label'><b>Prome Sem 7</b></td><td class='num'>2.409,3</td><td class='num'>2.938,8</td><td class='num'>3.780,2</td><td class='num'>4.807,8</td><td class='num'>265,6</td><td class='num'>14.201,7</td><td class='num'><span class='chg pos'>168,9</span></td><td class='num'><span class='chg pos'>1,20%</span></td></tr>
+<tr class='row-impact'><td class='label'><b>Suma Δ semanales</b></td><td class='num'><span class='chg neg'>-16,3</span></td><td class='num'><span class='chg pos'>5,3</span></td><td class='num'><span class='chg pos'>433,5</span></td><td class='num'><span class='chg neg'>-40,1</span></td><td class='num'><span class='chg neg'>-0,9</span></td><td class='num'><span class='chg pos'>381,6</span></td><td class='num'>—</td><td class='num'>—</td></tr>
+<tr class='row-trend'><td class='label'><b>Tendencia x flujo</b></td><td class='num'><span class='chg neg'>-3,27</span><br><span class='muted'>~-0,14%/sem</span></td><td class='num'><span class='chg neg'>-9,98</span><br><span class='muted'>~-0,33%/sem</span></td><td class='num'><span class='chg pos'>42,81</span><br><span class='muted'>~1,18%/sem</span></td><td class='num'><span class='chg neg'>-25,35</span><br><span class='muted'>~-0,52%/sem</span></td><td class='num'><span class='chg neg'>-0,43</span><br><span class='muted'>~-0,16%/sem</span></td><td class='num'><span class='chg pos'>3,78</span><br><span class='muted'>~0,03%/sem</span></td><td class='num'>—</td><td class='num'>—</td></tr>
+</tbody>
+      </table>
+    </div>
+    
+          </div>
+
+          <div class="footer">
+            Generado desde PI Web API · MAX(acumulado) en ventana 06:45</b>–<b>07:15</b>
+          </div>
+        </div>
+
+        
+    <script>
+      function openAllWeeks(){
+        document.querySelectorAll('details.acc').forEach(d => d.open = true);
+      }
+      function closeAllWeeks(){
+        document.querySelectorAll('details.acc').forEach(d => d.open = false);
+      }
+    </script>
+    
+      </body>
+    </html>
+    
